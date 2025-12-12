@@ -15,13 +15,12 @@ import { $, apiFetch, renderStatus, captureMovieForm } from '/scripts/common.js'
         // } else if (...) {
         // ...
         // }
-        try {
-            const created = await apiFetch(
-                '/movies', { method: 'POST', body: JSON.stringify(payload) });
-            renderStatus(statusEl, 'ok',
-                `Created movie #${created.id} "${created.title}" (${created.year}).`);
+        try 
+        {
+            const created = await apiFetch('/movies', { method: 'POST', body: JSON.stringify(payload) }); renderStatus(statusEl, 'ok', `Created movie #${created.id} "${created.title}" (${created.year}).`);
             form.reset();
-        } catch (err) {
+        } catch (err) 
+        {
             renderStatus(statusEl, 'err', `Create failed: ${err.message}`);
         }
     });
