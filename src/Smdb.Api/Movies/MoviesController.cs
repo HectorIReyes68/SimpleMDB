@@ -46,11 +46,40 @@ public class MoviesController
     public async Task UpdateMovie(HttpListenerRequest req,
      HttpListenerResponse res, Hashtable props, Func<Task> next)
     {
-        var uParams = (NameValueCollection)props["req,params"]!;
-        int id = int.TryParse(uParams["id"]!, out int i) ? i : -1;
-        var text = (string)props["req.text"]!;
-        var movie = JsonSerializer.Deserialize<Movie>(text,JsonSerializerOptions.Web);
-        var result = await movieService.UpdateMovie(id, movie!);
+        var uParamsObj = props["req.params"];
+        if (uParamsObj == null)
+        {
+            await HttpUtils.SendResponse(req, res, props, (int)HttpStatusCode.BadRequest, "Missing route parameters");
+            return;
+        }
+        var uParams = (NameValueCollection)uParamsObj;
+        if (!int.TryParse(uParams["id"], out int id))
+        {
+            await HttpUtils.SendResponse(req, res, props, (int)HttpStatusCode.BadRequest, "Invalid or missing id parameter");
+            return;
+        }
+        var text = props["req.text"] as string;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await HttpUtils.SendResponse(req, res, props, (int)HttpStatusCode.BadRequest, "Missing request body");
+            return;
+        }
+        Movie? movie;
+        try
+        {
+            movie = JsonSerializer.Deserialize<Movie>(text, JsonSerializerOptions.Web);
+        }
+        catch (JsonException)
+        {
+            await HttpUtils.SendResponse(req, res, props, (int)HttpStatusCode.BadRequest, "Invalid JSON in request body");
+            return;
+        }
+        if (movie == null)
+        {
+            await HttpUtils.SendResponse(req, res, props, (int)HttpStatusCode.BadRequest, "Invalid movie payload");
+            return;
+        }
+        var result = await movieService.UpdateMovie(id, movie);
         await JsonUtils.SendResultResponse(req, res, props, result);
         await next();
     }
